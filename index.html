@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Greka Caligramas v15</title>
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+
+<div class="workspace-border"></div>
+
+<div class="workspace" id="workspace">
+  <canvas id="canvas" aria-label="Lienzo para dibujar caligramas" role="region" tabindex="0"></canvas>
+</div>
+
+<div class="sidebar" id="sidebar" role="tablist" aria-label="Herramientas principales">
+  <button class="tab" data-panel="font" title="Tipografía" aria-label="Abrir panel de tipografía" role="tab">A</button>
+  <button class="tab" data-panel="color" title="Color" aria-label="Abrir panel de color" role="tab">&#9679;</button>
+  <button class="tab hidden-tab" data-panel="thickness" id="thicknessTab" title="Grosor" aria-label="Abrir panel de grosor" role="tab">G</button>
+  <button class="tab" data-panel="text" title="Texto" aria-label="Abrir panel de texto" role="tab">T</button>
+  <!-- Nuevo botón pedagógico: Trazo -->
+  <button class="tab" data-panel="trazo" title="Plantillas de trazo" aria-label="Abrir panel de plantillas de trazo" role="tab">☆</button>
+  <button class="tab hidden-tab" data-panel="clear" id="clearTab" title="Limpiar" aria-label="Abrir panel para limpiar lienzo" role="tab">&#10005;</button>
+</div>
+
+<nav class="nav-bottom-right">
+  <button class="top-btn" id="undoBtn" aria-label="Deshacer trazo" title="Deshacer (Ctrl+Z)">&#x2190; DESHACER</button>
+  <button class="top-btn" id="redoBtn" aria-label="Rehacer trazo" title="Rehacer (Ctrl+Y)">REHACER &#x2192;</button>
+</nav>
+
+<div class="speed-indicator" id="speedIndicator" aria-live="polite">
+  dist: <span id="distVal">0</span> &nbsp;|&nbsp; size: <span id="sizeVal">0</span>px
+</div>
+
+<input type="file" id="fileInput" accept=".png,.svg,image/png,image/svg+xml" aria-hidden="true">
+
+<div class="top-buttons">
+  <button class="top-btn" id="themeToggle" title="Cambiar tema" aria-label="Alternar esquema de color claro/oscuro">CLARO</button>
+  <button class="top-btn" id="modeToggle" title="Cambiar modalidad" aria-label="Alternar modalidad del trazo">ACCESIBLE</button>
+  <!-- Botón guardar hacia Bitácora / Exportar con reflexión -->
+  <button class="top-btn" id="finishToggle" title="Finalizar obra" aria-label="Finalizar e ir a reflexión">FINALIZAR</button>
+</div>
+
+<!-- Panel: Tipografia -->
+<div class="panel" id="fontPanel" role="tabpanel" aria-label="Panel de Tipografía">
+  <h3>Tipografía</h3>
+  <button class="font-option selected" data-font="Georgia, serif" style="font-family:Georgia,serif">Georgia</button>
+  <button class="font-option" data-font="'Times New Roman', Times, serif" style="font-family:'Times New Roman',serif">Times</button>
+  <button class="font-option" data-font="'Courier New', Courier, monospace" style="font-family:'Courier New',monospace">Courier</button>
+  <button class="font-option" data-font="Arial, Helvetica, sans-serif" style="font-family:Arial,sans-serif">Arial</button>
+  <button class="font-option" data-font="Verdana, Geneva, sans-serif" style="font-family:Verdana,sans-serif">Verdana</button>
+  <div class="panel-label" style="margin-top:14px">Peso</div>
+  <div class="weight-toggle">
+    <button class="weight-btn active" data-weight="normal">Normal</button>
+    <button class="weight-btn" data-weight="bold">Bold</button>
+  </div>
+</div>
+
+<!-- Panel: Color -->
+<div class="panel" id="colorPanel" role="tabpanel" aria-label="Panel de Color">
+  <h3>Color</h3>
+  <div class="color-grid">
+    <button class="color-option selected" data-color="#000000" style="background:#000000" title="Negro" aria-label="Color negro"></button>
+    <button class="color-option" data-color="#c0392b" style="background:#c0392b" title="Rojo" aria-label="Color rojo"></button>
+    <button class="color-option" data-color="#2980b9" style="background:#2980b9" title="Azul" aria-label="Color azul"></button>
+    <button class="color-option" data-color="#27ae60" style="background:#27ae60" title="Verde" aria-label="Color verde"></button>
+    <button class="color-option" data-color="#e67e22" style="background:#e67e22" title="Naranja" aria-label="Color naranja"></button>
+    <button class="color-option" data-color="#8e44ad" style="background:#8e44ad" title="Morado" aria-label="Color morado"></button>
+  </div>
+  <div class="color-input-row">
+    <input type="text" class="color-input" id="hexInput" placeholder="#RRGGBB" aria-label="Color HEX">
+    <input type="text" class="color-input" id="rgbInput" placeholder="R,G,B" aria-label="Color RGB">
+  </div>
+  <button class="eyedropper-btn" id="eyedropperBtn" aria-label="Cuentagotas">Cuentagotas</button>
+</div>
+
+<!-- Panel: Grosor -->
+<div class="panel" id="thicknessPanel" role="tabpanel" aria-label="Panel de Grosor">
+  <h3>Grosor</h3>
+  <div class="slider-container">
+    <div class="panel-label">Multiplicador de tamaño</div>
+    <div class="slider-row">
+      <input type="range" id="thicknessSlider" min="0.5" max="3" step="0.1" value="1" aria-label="Multiplicador de tamaño de fuente">
+      <span class="slider-val" id="thicknessVal">1.0x</span>
+    </div>
+  </div>
+  <div class="slider-container">
+    <div class="panel-label">Escala de distancia</div>
+    <div class="slider-row">
+      <input type="range" id="distScaleSlider" min="1" max="5" step="0.5" value="2" aria-label="Escala de distancia del ratón">
+      <span class="slider-val" id="distScaleVal">2.0</span>
+    </div>
+  </div>
+  <div class="slider-container">
+    <div class="panel-label">Densidad de espaciado</div>
+    <div class="slider-row">
+      <input type="range" id="densitySlider" min="0.8" max="2" step="0.1" value="1" aria-label="Densidad del espaciado de texto">
+      <span class="slider-val" id="densityVal">1.0</span>
+    </div>
+  </div>
+  <div class="slider-container">
+    <div class="panel-label">Interlineado</div>
+    <div class="slider-row">
+      <input type="range" id="leadingSlider" min="1" max="2" step="0.1" value="1" aria-label="Interlineado dinámico">
+      <span class="slider-val" id="leadingVal">1.0</span>
+    </div>
+  </div>
+</div>
+
+<!-- Panel: Texto -->
+<div class="panel" id="textPanel" role="tabpanel" aria-label="Panel de Texto">
+  <h3>Texto</h3>
+  <textarea id="textInput" placeholder="Escribe las palabras..." aria-label="Texto a dibujar">amor es arte</textarea>
+  <div class="panel-label" style="margin-top:10px">Modo: <span id="splitMode">palabras</span></div>
+  <div style="display: flex; gap: 8px; margin-top: 10px;">
+    <button class="speak-btn eyedropper-btn" id="speakBtn" style="flex: 1;" aria-label="Leer dibujo">🔊 Leer Texto</button>
+    <button class="speak-btn eyedropper-btn" id="generateTextBtn" style="flex: 1;" aria-label="Generar Poesía Híbrida">🤖 Generar</button>
+  </div>
+
+  <div style="margin-top:20px; border-top: 1px solid var(--border-color, #333); padding-top: 15px;">
+    <h3>Archivos</h3>
+    <p style="font-size:12px;color:var(--cmd-color);margin-bottom:8px">Importar base y exportar obra:</p>
+    <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+      <label class="template-btn" style="cursor:pointer; flex: 1; text-align: center;">
+        <input type="file" id="importBgInput" accept="image/png, image/jpeg, image/svg+xml" style="display:none;" />
+        Importar Base
+      </label>
+      <button class="template-btn" id="clearBgBtn" style="flex: 1;">Quitar Fondo</button>
+    </div>
+    <div style="display: flex; gap: 8px;">
+      <button class="template-btn" id="exportPngBtn" style="flex: 1;" title="Exportar PNG (Ctrl+G)">PNG</button>
+      <button class="template-btn" id="exportSvgBtn" style="flex: 1;" title="Exportar SVG (Ctrl+S)">SVG</button>
+    </div>
+  </div>
+</div>
+
+<!-- Panel: Trazo Plantillas (Pedagógico) -->
+<div class="panel" id="trazoPanel" role="tabpanel" aria-label="Panel de Plantillas de Trazo">
+  <h3>Modo Trazo</h3>
+  <p style="font-size:12px;color:var(--cmd-color);margin-bottom:14px">Plantillas guía de apoyo:</p>
+  <div class="template-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+    <button class="template-btn" data-template="none">Nada</button>
+    <button class="template-btn" data-template="circle">Círculo</button>
+    <button class="template-btn" data-template="square">Cuadrado</button>
+    <button class="template-btn" data-template="hexagon">Hexágono</button>
+    <button class="template-btn" data-template="star">Estrella</button>
+    <button class="template-btn" data-template="heart">Corazón</button>
+    <button class="template-btn" data-template="spiral">Espiral</button>
+    <button class="template-btn" data-template="triangle">Triángulo</button>
+  </div>
+
+  <div style="margin-top: 20px; border-top: 1px solid var(--border-color, #333); padding-top: 15px;">
+    <h4 style="margin-top: 0;">Ajustes de Plantilla / Fondo</h4>
+    
+    <div class="slider-container" style="margin-top:10px;">
+      <div class="panel-label">Opacidad</div>
+      <div class="slider-row">
+        <input type="range" id="tplOpacitySlider" min="0" max="1" step="0.05" value="0.15" aria-label="Opacidad">
+        <span class="slider-val" id="tplOpacityVal">15%</span>
+      </div>
+    </div>
+    
+    <div class="slider-container">
+      <div class="panel-label">Escala (Tamaño)</div>
+      <div class="slider-row">
+        <input type="range" id="tplScaleSlider" min="0.1" max="5.0" step="0.1" value="1.0" aria-label="Escala de plantilla">
+        <span class="slider-val" id="tplScaleVal">1.0x</span>
+      </div>
+    </div>
+    
+    <div class="slider-container">
+      <div class="panel-label">Posición Horizontal (X)</div>
+      <div class="slider-row">
+        <input type="range" id="tplOffsetXSlider" min="-100" max="100" step="1" value="0" aria-label="Posición X">
+        <span class="slider-val" id="tplOffsetXVal">0%</span>
+      </div>
+    </div>
+
+    <div class="slider-container">
+      <div class="panel-label">Posición Vertical (Y)</div>
+      <div class="slider-row">
+        <input type="range" id="tplOffsetYSlider" min="-100" max="100" step="1" value="0" aria-label="Posición Y">
+        <span class="slider-val" id="tplOffsetYVal">0%</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Panel: Limpiar -->
+<div class="panel" id="clearPanel" role="tabpanel" aria-label="Panel de Limpieza">
+  <h3>Limpiar</h3>
+  <p style="font-size:12px;color:var(--cmd-color);margin-bottom:14px">
+    Borra todo el contenido del lienzo y la imagen de fondo importada.
+  </p>
+  <button class="clear-btn" id="clearBtn" aria-label="Limpiar todo el lienzo">Limpiar Lienzo</button>
+</div>
+
+<!-- Modal Reflexión -->
+<div id="reflectionModal" class="modal-overlay" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="reflectionTitle">
+  <div class="modal-card">
+    <h2 id="reflectionTitle">¿Cómo te sientes con tu creación?</h2>
+    <div class="mood-selector" style="display: flex; gap: 15px; justify-content: center; margin: 20px 0;">
+      <button class="mood-btn" data-mood="feliz" aria-label="Me siento feliz" style="font-size: 32px; background: none; border: none; cursor: pointer;">😊</button>
+      <button class="mood-btn" data-mood="calma" aria-label="Me siento en calma" style="font-size: 32px; background: none; border: none; cursor: pointer;">😌</button>
+      <button class="mood-btn" data-mood="energia" aria-label="Siento energía" style="font-size: 32px; background: none; border: none; cursor: pointer;">⚡</button>
+    </div>
+    <input type="text" id="reflectionInput" placeholder="Dale un título a tu obra..." style="width: 100%; padding: 10px; margin-bottom: 20px; border-radius: 6px; border: 1px solid var(--input-border); background: var(--input-bg); color: var(--fg);" aria-label="Título de la obra">
+    <button class="eyedropper-btn" id="closeReflectionBtn">Guardar en Bitácora</button>
+    <p style="margin-top:20px; font-size:10px; color:#999;">Motor inspirado libremente en el genio de Tim Holman.</p>
+  </div>
+</div>
+
+<script type="module" src="./src/main.ts"></script>
+</body>
+</html>

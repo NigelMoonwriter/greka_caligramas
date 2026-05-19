@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Greka Caligramas v15</title>
+  <script type="module" crossorigin>(function(){const t=document.createElement("link").relList;if(t&&t.supports&&t.supports("modulepreload"))return;for(const a of document.querySelectorAll('link[rel="modulepreload"]'))e(a);new MutationObserver(a=>{for(const o of a)if(o.type==="childList")for(const n of o.addedNodes)n.tagName==="LINK"&&n.rel==="modulepreload"&&e(n)}).observe(document,{childList:!0,subtree:!0});function i(a){const o={};return a.integrity&&(o.integrity=a.integrity),a.referrerPolicy&&(o.referrerPolicy=a.referrerPolicy),a.crossOrigin==="use-credentials"?o.credentials="include":a.crossOrigin==="anonymous"?o.credentials="omit":o.credentials="same-origin",o}function e(a){if(a.ep)return;a.ep=!0;const o=i(a);fetch(a.href,o)}})();class P{constructor(){this.position={x:0,y:0},this.mouse={x:0,y:0,down:!1},this.textIndex=0,this.text="amor es arte",this.textArray=[],this.fontFamily="Georgia, serif",this.fontWeight="normal",this.color="#000000",this.minFontSize=8,this.maxFontSize=200,this.angleDistortion=.01,this.distScale=2,this.spacingDensity=1,this.leadingFactor=1,this.thicknessMultiplier=1,this.isAccessibleMode=!0,this.isDarkTheme=!1,this.operations=[],this.history=[],this.historyIndex=-1,this.maxHistory=50,this.bgImage=null,this.bgImageSrc=null,this.isEyedropperActive=!1,this.currentTemplate="none",this.templateParams={opacity:.15,scale:1,offsetX:0,offsetY:0},this.generativePhrases=["somos la forma en que el universo toma consciencia de sí mismo","fuego digital y cenizas de información fluyendo en el vacío","el algoritmo sueña con ovejas eléctricas que bailan al compás del viento","memoria encriptada en la corteza de un árbol cibernético","respirando datos que exhalan entropía a través del latido binario","lenguaje híbrido donde el alma y la máquina conjugan el amor","ecos de código reescribiendo la mitología de nuestros ancestros","un fractal de pensamientos extendiéndose hasta el borde del cosmos"],this.isDrawingLoopRunning=!1,this.canvas=document.getElementById("canvas"),this.ctx=this.canvas.getContext("2d"),this.workspace=document.getElementById("workspace"),this.setupCanvas(),this.updateTextArray(),this.saveState(),this.bindEvents(),this.updateModeUI(),this.startLoop()}setupCanvas(){const t=this.workspace.getBoundingClientRect();this.canvas.width=t.width,this.canvas.height=t.height}resizeCanvas(){let t=null;this.canvas.width>0&&this.canvas.height>0&&(t=this.ctx.getImageData(0,0,this.canvas.width,this.canvas.height));const i=this.workspace.getBoundingClientRect();this.canvas.width=i.width,this.canvas.height=i.height,t&&this.ctx.putImageData(t,0,0),this.drawBgImage(),this.drawTemplate()}updateTextArray(){const t=this.text.trim();if(!t){this.textArray=["a"];return}this.isAccessibleMode?this.textArray=t.split(/\s+/):this.textArray=t.split(""),this.textIndex=0;const i=document.getElementById("splitMode");i&&(i.textContent=this.isAccessibleMode?"palabras":"caracteres")}startLoop(){if(this.isDrawingLoopRunning)return;this.isDrawingLoopRunning=!0;const t=()=>{if(!this.mouse.down){this.isDrawingLoopRunning=!1;return}this.draw(),requestAnimationFrame(t)};requestAnimationFrame(t)}draw(){if(!this.mouse.down||this.textArray.length===0)return;const t=this.textArray[this.textIndex];let i=Math.atan2(this.mouse.y-this.position.y,this.mouse.x-this.position.x);this.ctx.save(),this.ctx.font=`${this.fontWeight?this.fontWeight+" ":""}100px ${this.fontFamily}`;let e=this.ctx.measureText(t).width/100;this.ctx.restore();let a=e*this.spacingDensity;Math.abs(Math.sin(i))>.7&&(a*=this.leadingFactor);let o=Math.max(this.distScale,a*this.thicknessMultiplier*1.05),n=this.dist(this.position,this.mouse),h=this.minFontSize+n/o;h=h*this.thicknessMultiplier,h>this.maxFontSize&&(h=this.maxFontSize);const l=this.fontWeight+" "+h+"px "+this.fontFamily;let c=this.measureWidth(t,l);if(c=c*this.spacingDensity,Math.abs(Math.sin(i))>.7&&(c=c*this.leadingFactor),n>c){const m=i+(Math.random()*(this.angleDistortion*2)-this.angleDistortion);this.ctx.save(),this.ctx.translate(this.position.x,this.position.y),this.ctx.rotate(m),this.ctx.font=l,this.ctx.fillStyle=this.color,this.ctx.fillText(t,0,0),this.ctx.restore(),this.operations.push({char:t,x:this.position.x,y:this.position.y,fontSize:h,angle:m,fontFamily:this.fontFamily,fontWeight:this.fontWeight,color:this.color}),this.textIndex++,this.textIndex>=this.textArray.length&&(this.textIndex=0),this.position.x=this.position.x+Math.cos(i)*c,this.position.y=this.position.y+Math.sin(i)*c,this.showIndicator(n,h)}}dist(t,i){const e=i.x-t.x,a=i.y-t.y;return Math.sqrt(e*e+a*a)}measureWidth(t,i){return this.ctx.font=i,this.ctx.measureText(t).width}showIndicator(t,i){const e=document.getElementById("speedIndicator");document.getElementById("distVal").textContent=Math.round(t).toString(),document.getElementById("sizeVal").textContent=Math.round(i).toString(),e.classList.contains("show")||e.classList.add("show")}hideIndicator(){document.getElementById("speedIndicator").classList.remove("show")}getCanvasPos(t){var e,a;const i=this.canvas.getBoundingClientRect();return{x:(t.clientX||t.pageX||((e=t.touches)==null?void 0:e[0].clientX))-i.left,y:(t.clientY||t.pageY||((a=t.touches)==null?void 0:a[0].clientY))-i.top}}onPointerDown(t){if(this.isEyedropperActive){this.pickColor(t);return}const i=this.getCanvasPos(t);this.mouse.down=!0,this.position.x=i.x,this.position.y=i.y,this.mouse.x=i.x,this.mouse.y=i.y,this.textIndex=0,this.startLoop()}onPointerMove(t){const i=this.getCanvasPos(t);this.mouse.x=i.x,this.mouse.y=i.y,this.draw()}onPointerUp(){this.mouse.down&&(this.mouse.down=!1,this.saveState(),this.hideIndicator())}pickColor(t){const i=this.getCanvasPos(t),e=this.ctx.getImageData(Math.round(i.x),Math.round(i.y),1,1).data;this.color=`rgb(${e[0]},${e[1]},${e[2]})`,this.isEyedropperActive=!1,this.canvas.style.cursor="crosshair",document.querySelectorAll(".color-option").forEach(a=>a.classList.remove("selected")),document.getElementById("hexInput").value=this.rgbToHex(e[0],e[1],e[2]),document.getElementById("rgbInput").value=`${e[0]},${e[1]},${e[2]}`}rgbToHex(t,i,e){return"#"+[t,i,e].map(a=>a.toString(16).padStart(2,"0")).join("")}saveState(){this.historyIndex<this.history.length-1&&(this.history=this.history.slice(0,this.historyIndex+1)),this.history.push({dataUrl:this.canvas.toDataURL(),opsLength:this.operations.length}),this.history.length>this.maxHistory?this.history.shift():this.historyIndex++}undo(){this.historyIndex<=0||(this.historyIndex--,this.restoreState(this.history[this.historyIndex]))}redo(){this.historyIndex>=this.history.length-1||(this.historyIndex++,this.restoreState(this.history[this.historyIndex]))}restoreState(t){const i=new Image;i.onload=()=>{this.ctx.clearRect(0,0,this.canvas.width,this.canvas.height),this.drawBgImage(),this.drawTemplate(),this.ctx.drawImage(i,0,0)},i.src=t.dataUrl,this.operations=this.operations.slice(0,t.opsLength)}exportPNG(){const t=document.createElement("canvas"),i=t.getContext("2d");t.width=this.canvas.width,t.height=this.canvas.height,i.fillStyle="#ffffff",i.fillRect(0,0,t.width,t.height),i.drawImage(this.canvas,0,0),i.font="12px 'Courier New'",i.fillStyle="#999999",i.fillText("Inspirado orgánicamente en el motor de Tim Holman. Creado en Greka.",10,t.height-10);const e=document.createElement("a");e.download=`greka_caligrama_${Date.now()}.png`,e.href=t.toDataURL("image/png"),e.click()}exportSVG(){const t=this.canvas.width,i=this.canvas.height,e=[];e.push('<?xml version="1.0" encoding="UTF-8"?>'),e.push("\x3C!-- Inspirado en el Double-Draw Engine de Tim Holman -->"),e.push(`<svg xmlns="http://www.w3.org/2000/svg" width="${t}" height="${i}" viewBox="0 0 ${t} ${i}">`),e.push('  <rect width="100%" height="100%" fill="#ffffff"/>'),this.bgImageSrc&&e.push(`  <image href="${this.bgImageSrc}" x="0" y="0" width="${t}" height="${i}" opacity="0.15" preserveAspectRatio="xMidYMid meet"/>`);for(let n=0;n<this.operations.length;n++){const h=this.operations[n],l=(h.angle*180/Math.PI).toFixed(2),c=h.x.toFixed(2),m=h.y.toFixed(2),g=h.fontSize.toFixed(2),u=h.char.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");e.push(`  <text x="0" y="0" font-family="${h.fontFamily}" font-weight="${h.fontWeight}" font-size="${g}" fill="${h.color}" transform="translate(${c},${m}) rotate(${l})">${u}</text>`)}e.push(`  <text x="10" y="${i-10}" font-family="Courier New" font-size="12" fill="#999999">Inspirado orgánicamente en el motor de Tim Holman. Creado en Greka.</text>`),e.push("</svg>");const a=new Blob([e.join(`
+`)],{type:"image/svg+xml"}),o=document.createElement("a");o.download=`greka_caligrama_${Date.now()}.svg`,o.href=URL.createObjectURL(a),o.click(),URL.revokeObjectURL(o.href)}importImage(){document.getElementById("fileInput").click()}loadImage(t){if(!t)return;const i=new FileReader;i.onload=e=>{var o;const a=new Image;a.onload=()=>{var n;this.bgImage=a,this.bgImageSrc=(n=e.target)==null?void 0:n.result,this.drawBgImage(),this.saveState()},a.src=(o=e.target)==null?void 0:o.result},i.readAsDataURL(t)}drawBgImage(){if(!this.bgImage)return;this.ctx.save(),this.ctx.globalAlpha=this.templateParams.opacity;const i=Math.min(this.canvas.width/this.bgImage.width,this.canvas.height/this.bgImage.height)*this.templateParams.scale,e=this.bgImage.width*i,a=this.bgImage.height*i,o=this.templateParams.offsetX/100*(this.canvas.width/2),n=this.templateParams.offsetY/100*(this.canvas.height/2),h=(this.canvas.width-e)/2+o,l=(this.canvas.height-a)/2+n;this.ctx.drawImage(this.bgImage,h,l,e,a),this.ctx.globalAlpha=1,this.ctx.restore()}drawTemplate(){if(this.currentTemplate==="none")return;this.ctx.save(),this.ctx.strokeStyle=`rgba(0,0,0,${this.templateParams.opacity})`,this.isDarkTheme&&(this.ctx.strokeStyle=`rgba(255,255,255,${this.templateParams.opacity})`),this.ctx.setLineDash([5,5]),this.ctx.lineWidth=2,this.ctx.beginPath();const t=this.templateParams.offsetX/100*(this.canvas.width/2),i=this.templateParams.offsetY/100*(this.canvas.height/2),e=this.canvas.width/2+t,a=this.canvas.height/2+i,o=200*this.templateParams.scale;if(this.currentTemplate==="circle")this.ctx.arc(e,a,o,0,Math.PI*2);else if(this.currentTemplate==="square")this.ctx.rect(e-o,a-o,o*2,o*2);else if(this.currentTemplate==="hexagon")for(let n=0;n<=6;n++){const h=n*Math.PI/3,l=e+o*Math.cos(h),c=a+o*Math.sin(h);n===0?this.ctx.moveTo(l,c):this.ctx.lineTo(l,c)}else if(this.currentTemplate==="triangle"){const n=o*Math.sqrt(3)/2;this.ctx.moveTo(e,a-o),this.ctx.lineTo(e-o,a+n),this.ctx.lineTo(e+o,a+n),this.ctx.closePath()}else if(this.currentTemplate==="spiral"){this.ctx.moveTo(e,a);for(let n=0;n<300;n++){const h=.1*n,l=o/30*h,c=e+l*Math.cos(h),m=a+l*Math.sin(h);this.ctx.lineTo(c,m)}}else if(this.currentTemplate==="star"){let n=Math.PI/2*3,h=e,l=a,c=Math.PI/5;this.ctx.moveTo(e,a-o);for(let m=0;m<5;m++)h=e+Math.cos(n)*o,l=a+Math.sin(n)*o,this.ctx.lineTo(h,l),n+=c,h=e+Math.cos(n)*(o/2),l=a+Math.sin(n)*(o/2),this.ctx.lineTo(h,l),n+=c;this.ctx.lineTo(e,a-o)}else if(this.currentTemplate==="heart"){const n=o;this.ctx.moveTo(e,a+n/4),this.ctx.bezierCurveTo(e,a,e-n/2,a,e-n/2,a+n/4),this.ctx.bezierCurveTo(e-n/2,a+n/2,e,a+n*.75,e,a+n),this.ctx.bezierCurveTo(e,a+n*.75,e+n/2,a+n/2,e+n/2,a+n/4),this.ctx.bezierCurveTo(e+n/2,a,e,a,e,a+n/4)}this.ctx.stroke(),this.ctx.restore()}clearCanvas(){this.ctx.clearRect(0,0,this.canvas.width,this.canvas.height),this.operations=[],this.bgImage=null,this.bgImageSrc=null,this.drawTemplate(),this.saveState(),this.hideAllPanels()}togglePanel(t,i){const e=document.getElementById(t);if(!e)return;const a=e.classList.contains("show");this.hideAllPanels(),a||(e.classList.add("show"),i&&i.classList.add("active"))}hideAllPanels(){document.querySelectorAll(".panel").forEach(t=>t.classList.remove("show")),document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"))}flashCommand(t){const i=document.querySelector(`.command[data-idx="${t}"]`);i&&(i.classList.add("active"),setTimeout(()=>i.classList.remove("active"),300))}toggleTheme(){this.isDarkTheme=!this.isDarkTheme,document.documentElement.setAttribute("data-theme",this.isDarkTheme?"dark":""),document.getElementById("themeToggle").textContent=this.isDarkTheme?"OSCURO":"CLARO",this.restoreState(this.history[this.historyIndex])}toggleMode(){this.isAccessibleMode=!this.isAccessibleMode,this.updateModeUI(),this.updateTextArray()}updateModeUI(){document.getElementById("modeToggle").textContent=this.isAccessibleMode?"ACCESIBLE":"AVANZADO";const t=document.getElementById("thicknessTab"),i=document.getElementById("clearTab");this.isAccessibleMode?(t.classList.add("hidden-tab"),i.classList.add("hidden-tab")):(t.classList.remove("hidden-tab"),i.classList.remove("hidden-tab"));const e=document.getElementById("splitMode");e&&(e.textContent=this.isAccessibleMode?"palabras":"caracteres")}speak(){const t=new SpeechSynthesisUtterance(this.text);t.lang="es-MX",t.onstart=()=>{var i;return(i=document.getElementById("speakBtn"))==null?void 0:i.classList.add("speaking")},t.onend=()=>{var i;return(i=document.getElementById("speakBtn"))==null?void 0:i.classList.remove("speaking")},window.speechSynthesis.speak(t)}bindEvents(){var i,e,a,o,n,h,l,c,m,g,u,y,v,x,I,E,w,L,b,S,B,T,A,k,M;window.addEventListener("resize",()=>this.resizeCanvas()),this.canvas.addEventListener("mousedown",s=>this.onPointerDown(s)),this.canvas.addEventListener("mousemove",s=>this.onPointerMove(s)),this.canvas.addEventListener("mouseup",()=>this.onPointerUp()),this.canvas.addEventListener("mouseleave",()=>this.onPointerUp()),this.canvas.addEventListener("touchstart",s=>{s.preventDefault(),this.onPointerDown(s.touches[0])},{passive:!1}),this.canvas.addEventListener("touchmove",s=>{s.preventDefault(),this.onPointerMove(s.touches[0])},{passive:!1}),this.canvas.addEventListener("touchend",s=>{s.preventDefault(),this.onPointerUp()},{passive:!1}),document.querySelectorAll(".tab").forEach(s=>{s.addEventListener("click",r=>{const d=r.currentTarget.dataset.panel+"Panel";this.togglePanel(d,r.currentTarget)})}),document.addEventListener("click",s=>{!s.target.closest(".sidebar")&&!s.target.closest(".panel")&&this.hideAllPanels()}),document.querySelectorAll(".font-option").forEach(s=>{s.addEventListener("click",r=>{document.querySelectorAll(".font-option").forEach(d=>d.classList.remove("selected")),r.target.classList.add("selected"),this.fontFamily=r.target.dataset.font})}),document.querySelectorAll(".weight-btn").forEach(s=>{s.addEventListener("click",r=>{document.querySelectorAll(".weight-btn").forEach(d=>d.classList.remove("active")),r.target.classList.add("active"),this.fontWeight=r.target.dataset.weight})}),document.querySelectorAll("[data-template]").forEach(s=>{s.addEventListener("click",r=>{this.currentTemplate=r.target.dataset.template,this.restoreState(this.history[this.historyIndex])})}),document.querySelectorAll(".color-option").forEach(s=>{s.addEventListener("click",r=>{document.querySelectorAll(".color-option").forEach(d=>d.classList.remove("selected")),r.target.classList.add("selected"),this.color=r.target.dataset.color,document.getElementById("hexInput").value="",document.getElementById("rgbInput").value=""})}),(i=document.getElementById("hexInput"))==null||i.addEventListener("change",s=>{const r=s.target.value.trim();/^#[0-9A-Fa-f]{6}$/.test(r)&&(this.color=r,document.querySelectorAll(".color-option").forEach(d=>d.classList.remove("selected")))}),(e=document.getElementById("rgbInput"))==null||e.addEventListener("change",s=>{const r=s.target.value.match(/\d+/g);if(r&&r.length===3){const d=parseInt(r[0],10),p=parseInt(r[1],10),f=parseInt(r[2],10);d>=0&&d<=255&&p>=0&&p<=255&&f>=0&&f<=255&&(this.color=`rgb(${d},${p},${f})`,document.querySelectorAll(".color-option").forEach(D=>D.classList.remove("selected")))}}),(a=document.getElementById("eyedropperBtn"))==null||a.addEventListener("click",()=>{this.isEyedropperActive=!0,this.canvas.style.cursor="cell"}),(o=document.getElementById("thicknessSlider"))==null||o.addEventListener("input",s=>{this.thicknessMultiplier=parseFloat(s.target.value),document.getElementById("thicknessVal").textContent=this.thicknessMultiplier.toFixed(1)+"x",s.target.setAttribute("aria-valuenow",s.target.value)}),(n=document.getElementById("distScaleSlider"))==null||n.addEventListener("input",s=>{this.distScale=parseFloat(s.target.value),document.getElementById("distScaleVal").textContent=this.distScale.toFixed(1),s.target.setAttribute("aria-valuenow",s.target.value)}),(h=document.getElementById("densitySlider"))==null||h.addEventListener("input",s=>{this.spacingDensity=parseFloat(s.target.value),document.getElementById("densityVal").textContent=this.spacingDensity.toFixed(1),s.target.setAttribute("aria-valuenow",s.target.value)}),(l=document.getElementById("leadingSlider"))==null||l.addEventListener("input",s=>{this.leadingFactor=parseFloat(s.target.value),document.getElementById("leadingVal").textContent=this.leadingFactor.toFixed(1),s.target.setAttribute("aria-valuenow",s.target.value)}),(c=document.getElementById("textInput"))==null||c.addEventListener("input",s=>{this.text=s.target.value||"a",this.updateTextArray()}),(m=document.getElementById("speakBtn"))==null||m.addEventListener("click",()=>{this.speak()}),(g=document.getElementById("clearBtn"))==null||g.addEventListener("click",()=>{this.clearCanvas()}),(u=document.getElementById("importBgInput"))==null||u.addEventListener("change",s=>{const r=s.target.files&&s.target.files[0];r&&this.loadImage(r),s.target.value=""}),(y=document.getElementById("clearBgBtn"))==null||y.addEventListener("click",()=>{this.bgImage=null,this.bgImageSrc=null,this.restoreState(this.history[this.historyIndex])}),(v=document.getElementById("generateTextBtn"))==null||v.addEventListener("click",s=>{const r=this.generativePhrases[Math.floor(Math.random()*this.generativePhrases.length)];this.text=r,document.getElementById("textInput").value=r,this.updateTextArray(),s.target.style.transform="scale(1.05)",setTimeout(()=>s.target.style.transform="scale(1)",150)}),(x=document.getElementById("tplOpacitySlider"))==null||x.addEventListener("input",s=>{this.templateParams.opacity=parseFloat(s.target.value),document.getElementById("tplOpacityVal").textContent=Math.round(this.templateParams.opacity*100)+"%",s.target.setAttribute("aria-valuenow",s.target.value),this.restoreState(this.history[this.historyIndex])}),(I=document.getElementById("tplScaleSlider"))==null||I.addEventListener("input",s=>{this.templateParams.scale=parseFloat(s.target.value),document.getElementById("tplScaleVal").textContent=this.templateParams.scale.toFixed(1)+"x",s.target.setAttribute("aria-valuenow",s.target.value),this.restoreState(this.history[this.historyIndex])}),(E=document.getElementById("tplOffsetXSlider"))==null||E.addEventListener("input",s=>{this.templateParams.offsetX=parseFloat(s.target.value),document.getElementById("tplOffsetXVal").textContent=this.templateParams.offsetX+"%",s.target.setAttribute("aria-valuenow",s.target.value),this.restoreState(this.history[this.historyIndex])}),(w=document.getElementById("tplOffsetYSlider"))==null||w.addEventListener("input",s=>{this.templateParams.offsetY=parseFloat(s.target.value),document.getElementById("tplOffsetYVal").textContent=this.templateParams.offsetY+"%",s.target.setAttribute("aria-valuenow",s.target.value),this.restoreState(this.history[this.historyIndex])}),(L=document.getElementById("exportPngBtn"))==null||L.addEventListener("click",()=>this.exportPNG()),(b=document.getElementById("exportSvgBtn"))==null||b.addEventListener("click",()=>this.exportSVG()),(S=document.getElementById("undoBtn"))==null||S.addEventListener("click",()=>this.undo()),(B=document.getElementById("redoBtn"))==null||B.addEventListener("click",()=>this.redo()),(T=document.getElementById("themeToggle"))==null||T.addEventListener("click",()=>this.toggleTheme()),(A=document.getElementById("modeToggle"))==null||A.addEventListener("click",()=>this.toggleMode());const t=document.getElementById("reflectionModal");(k=document.getElementById("finishToggle"))==null||k.addEventListener("click",()=>{t&&(t.style.display="flex"),this.exportPNG()}),(M=document.getElementById("closeReflectionBtn"))==null||M.addEventListener("click",()=>{t&&(t.style.display="none");const s=document.getElementById("reflectionInput").value;console.log("Bitácora Guardada:",s)}),document.querySelectorAll(".mood-btn").forEach(s=>{s.addEventListener("click",r=>{document.querySelectorAll(".mood-btn").forEach(d=>d.style.transform="scale(1)"),r.target.style.transform="scale(1.3)"})}),document.addEventListener("keydown",s=>{if(s.ctrlKey||s.metaKey){const r=s.key.toLowerCase();r==="g"?(s.preventDefault(),this.exportPNG(),this.flashCommand(0)):r==="s"?(s.preventDefault(),this.exportSVG(),this.flashCommand(1)):r==="i"?(s.preventDefault(),this.importImage(),this.flashCommand(2)):r==="z"?(s.preventDefault(),this.undo(),this.flashCommand(3)):r==="y"&&(s.preventDefault(),this.redo(),this.flashCommand(4))}})}}document.readyState==="loading"?document.addEventListener("DOMContentLoaded",()=>new P):new P;</script>
+  <style rel="stylesheet" crossorigin>:root{--bg: #f5f5f5;--fg: #222;--canvas-bg: #ffffff;--ui-panel: rgba(255,255,255,.98);--ui-border: #ddd;--ui-border-outer: #f0f0f0;--ui-hover: rgba(0,0,0,.9);--ui-active: #333;--ui-active-border: #555;--tab-bg: rgba(0,0,0,.8);--tab-color: #fff;--tab-hover-border: #333;--input-bg: #fafafa;--input-border: #e0e0e0;--input-focus: #333;--font-selected-bg: #333;--font-selected-fg: #fff;--cmd-bg: rgba(255,255,255,.92);--cmd-color: #888;--cmd-active-color: #333;--indicator-bg: rgba(255,255,255,.92);--indicator-color: #999;--danger: #e74c3c;--accent: #4A90E2;--shadow: rgba(0,0,0,.08);--panel-shadow: rgba(0,0,0,.15)}[data-theme=dark]{--bg: #1a1a1a;--fg: #e8e8e8;--canvas-bg: #333333;--ui-panel: rgba(30,30,30,.98);--ui-border: #555;--ui-border-outer: #333;--ui-hover: rgba(255,255,255,.92);--ui-active: #ddd;--ui-active-border: #bbb;--tab-bg: rgba(255,255,255,.85);--tab-color: #222;--tab-hover-border: #ddd;--input-bg: #444;--input-border: #555;--input-focus: #ddd;--font-selected-bg: #ddd;--font-selected-fg: #222;--cmd-bg: rgba(20,20,20,.92);--cmd-color: #777;--cmd-active-color: #ddd;--indicator-bg: rgba(20,20,20,.92);--indicator-color: #666;--danger: #c0392b;--shadow: rgba(0,0,0,.3);--panel-shadow: rgba(0,0,0,.4)}*,*:before,*:after{box-sizing:border-box;margin:0;padding:0}body{font-family:Courier New,Courier,monospace;background:var(--bg);color:var(--fg);height:100vh;overflow:hidden;transition:background .3s,color .3s;-webkit-user-select:none;user-select:none}.workspace{position:absolute;top:40px;left:120px;right:40px;bottom:80px;background:var(--canvas-bg);border:1px solid var(--ui-border);box-shadow:0 2px 24px var(--shadow);cursor:crosshair;transition:background .3s,border-color .3s;overflow:hidden}.workspace:before{content:"";position:absolute;top:-1px;right:-1px;bottom:-1px;left:-1px;border:1px solid var(--ui-border);pointer-events:none;z-index:1}.workspace-border{position:absolute;top:39px;left:119px;right:39px;bottom:79px;border:2px solid var(--ui-border);pointer-events:none;border-radius:2px;transition:border-color .3s}.workspace-border:before{content:"";position:absolute;top:-6px;left:-6px;right:-6px;bottom:-6px;border:1px solid var(--ui-border-outer);border-radius:4px;transition:border-color .3s}#canvas{display:block;position:absolute;top:0;right:0;bottom:0;left:0}.sidebar{position:fixed;left:20px;top:50%;transform:translateY(-50%);z-index:1000;display:flex;flex-direction:column;gap:18px}.tab{width:60px;height:60px;background:var(--tab-bg);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .3s ease;color:var(--tab-color);font-size:20px;font-family:Courier New,Courier,monospace;font-weight:700;border:2px solid transparent;position:relative;flex-shrink:0}.tab:hover{background:var(--ui-hover);transform:scale(1.06);border-color:var(--tab-hover-border)}.tab.active{background:var(--ui-active);border-color:var(--ui-active-border)}.tab.hidden-tab{display:none}.panel{position:absolute;left:80px;top:50%;transform:translateY(-50%) translate(-15px);background:var(--ui-panel);border:1px solid var(--ui-border);border-radius:12px;padding:24px;min-width:230px;box-shadow:0 8px 30px var(--panel-shadow);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);opacity:0;visibility:hidden;transition:opacity .3s cubic-bezier(.4,0,.2,1),transform .3s cubic-bezier(.4,0,.2,1),visibility .3s;z-index:1001}.panel.show{opacity:1;visibility:visible;transform:translateY(-50%) translate(0)}.panel h3{margin:0 0 16px;font-size:12px;color:var(--fg);text-transform:uppercase;letter-spacing:2px;font-weight:700}.panel-label{font-size:11px;color:var(--cmd-color);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px}.panel-value{font-size:13px;color:var(--fg);font-weight:700;margin-bottom:14px}.font-option{display:block;width:100%;text-align:left;padding:10px 14px;margin:5px 0;border:1px solid var(--input-border);border-radius:6px;cursor:pointer;transition:all .2s;font-size:15px;background:var(--ui-panel);color:var(--fg)}.font-option:hover,.font-option.selected{background:var(--font-selected-bg);color:var(--font-selected-fg);border-color:var(--font-selected-bg)}.weight-toggle{display:flex;gap:0;margin-top:12px;border:1px solid var(--input-border);border-radius:6px;overflow:hidden}.weight-btn{flex:1;padding:8px 12px;border:none;background:var(--input-bg);color:var(--fg);cursor:pointer;font-family:inherit;font-size:12px;transition:all .2s}.weight-btn:hover{background:var(--font-selected-bg);color:var(--font-selected-fg)}.weight-btn.active{background:var(--ui-active);color:var(--font-selected-fg)}.color-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}.color-option{width:38px;height:38px;border-radius:50%;cursor:pointer;border:3px solid transparent;transition:all .2s;margin:0 auto}.color-option:hover{transform:scale(1.12);border-color:var(--cmd-color)}.color-option.selected{border-color:var(--ui-active);transform:scale(1.15);box-shadow:0 0 0 2px var(--ui-active)}.color-input-row{display:flex;gap:8px;margin-bottom:10px}.color-input{flex:1;padding:7px 10px;border:1px solid var(--input-border);border-radius:6px;background:var(--input-bg);color:var(--fg);font-family:inherit;font-size:12px;transition:border-color .2s}.color-input:focus{outline:none;border-color:var(--input-focus)}.eyedropper-btn{width:100%;padding:9px 12px;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer;font-family:inherit;font-size:12px;transition:opacity .2s}.eyedropper-btn:hover{opacity:.85}.slider-container{margin-bottom:16px}.slider-row{display:flex;align-items:center;gap:10px}.slider-row input[type=range]{flex:1;-webkit-appearance:none;-moz-appearance:none;appearance:none;height:4px;background:var(--input-border);border-radius:2px;outline:none}.slider-row input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--ui-active);cursor:pointer}.slider-row input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:var(--ui-active);cursor:pointer;border:none}.slider-val{font-size:13px;font-weight:700;min-width:40px;text-align:right;color:var(--fg)}textarea{width:100%;min-height:80px;border:1px solid var(--input-border);border-radius:6px;padding:10px 12px;font-family:inherit;font-size:14px;resize:vertical;background:var(--input-bg);color:var(--fg);transition:border-color .2s,background .2s}textarea:focus{outline:none;border-color:var(--input-focus);background:var(--ui-panel)}.clear-btn{width:100%;padding:11px 14px;background:var(--danger);color:#fff;border:none;border-radius:6px;cursor:pointer;font-family:inherit;font-size:13px;font-weight:700;transition:opacity .2s}.clear-btn:hover{opacity:.85}.top-buttons{position:fixed;top:16px;right:20px;display:flex;gap:8px;z-index:1002}.nav-bottom-right{position:absolute;bottom:20px;right:20px;display:flex;gap:10px;z-index:100}.top-btn{background:var(--tab-bg);color:var(--tab-color);border:none;border-radius:6px;padding:7px 14px;cursor:pointer;font-family:Courier New,Courier,monospace;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;transition:opacity .2s;white-space:nowrap}.top-btn:hover{opacity:.8}.speed-indicator{position:fixed;top:16px;left:50%;transform:translate(-50%);font-family:Courier New,Courier,monospace;font-size:11px;color:var(--indicator-color);pointer-events:none;opacity:0;transition:opacity .25s;background:var(--indicator-bg);padding:7px 18px;border-radius:16px;border:1px solid var(--ui-border);z-index:1000;white-space:nowrap}.speed-indicator.show{opacity:1}.commands{position:fixed;bottom:18px;left:50%;transform:translate(-50%);font-size:10px;color:var(--cmd-color);display:flex;gap:30px;pointer-events:none;z-index:1000;background:var(--cmd-bg);padding:10px 24px;border-radius:20px;border:1px solid var(--ui-border);transition:background .3s,color .3s,border-color .3s}.command{opacity:.7;transition:all .3s;white-space:nowrap;letter-spacing:.5px}.command.active{opacity:1;color:var(--cmd-active-color);transform:scale(1.05)}.command kbd{font-family:inherit;font-size:10px;background:var(--input-border);padding:1px 5px;border-radius:3px;margin-right:4px}#fileInput{display:none}@media(max-width:768px){.workspace{left:80px;right:16px;top:32px;bottom:90px}.workspace-border{left:79px;right:15px;top:31px;bottom:89px}.sidebar{left:8px;gap:12px}.tab{width:48px;height:48px;font-size:17px}.panel{left:64px;min-width:190px;padding:18px}.commands{flex-direction:column;gap:6px;font-size:9px;bottom:10px;padding:8px 16px}.top-buttons{top:8px;right:8px;gap:6px}.top-btn{font-size:9px;padding:5px 10px}.speed-indicator{font-size:9px;padding:5px 12px;top:8px}}.modal-overlay{position:fixed;top:0;right:0;bottom:0;left:0;background:#0009;-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);z-index:2000;display:flex;align-items:center;justify-content:center}.modal-card{background:var(--ui-panel);border:1px solid var(--ui-border);border-radius:12px;padding:30px;text-align:center;box-shadow:0 10px 40px #0000004d;max-width:400px}.modal-card h2{font-size:16px;margin-bottom:10px;text-transform:uppercase;letter-spacing:1px;color:var(--fg)}.mood-btn{transition:transform .2s}.mood-btn:hover{transform:scale(1.2)}@keyframes speaking-pulse{0%{box-shadow:0 0 #4a90e2b3}70%{box-shadow:0 0 0 10px #4a90e200}to{box-shadow:0 0 #4a90e200}}.speaking{animation:speaking-pulse 1.5s infinite}</style>
+</head>
+<body>
+
+<div class="workspace-border"></div>
+
+<div class="workspace" id="workspace">
+  <canvas id="canvas" aria-label="Lienzo para dibujar caligramas" role="region" tabindex="0"></canvas>
+</div>
+
+<div class="sidebar" id="sidebar" role="tablist" aria-label="Herramientas principales">
+  <button class="tab" data-panel="font" title="Tipografía" aria-label="Abrir panel de tipografía" role="tab">A</button>
+  <button class="tab" data-panel="color" title="Color" aria-label="Abrir panel de color" role="tab">&#9679;</button>
+  <button class="tab hidden-tab" data-panel="thickness" id="thicknessTab" title="Grosor" aria-label="Abrir panel de grosor" role="tab">G</button>
+  <button class="tab" data-panel="text" title="Texto" aria-label="Abrir panel de texto" role="tab">T</button>
+  <!-- Nuevo botón pedagógico: Trazo -->
+  <button class="tab" data-panel="trazo" title="Plantillas de trazo" aria-label="Abrir panel de plantillas de trazo" role="tab">☆</button>
+  <button class="tab hidden-tab" data-panel="clear" id="clearTab" title="Limpiar" aria-label="Abrir panel para limpiar lienzo" role="tab">&#10005;</button>
+</div>
+
+<nav class="nav-bottom-right">
+  <button class="top-btn" id="undoBtn" aria-label="Deshacer trazo" title="Deshacer (Ctrl+Z)">&#x2190; DESHACER</button>
+  <button class="top-btn" id="redoBtn" aria-label="Rehacer trazo" title="Rehacer (Ctrl+Y)">REHACER &#x2192;</button>
+</nav>
+
+<div class="speed-indicator" id="speedIndicator" aria-live="polite">
+  dist: <span id="distVal">0</span> &nbsp;|&nbsp; size: <span id="sizeVal">0</span>px
+</div>
+
+<input type="file" id="fileInput" accept=".png,.svg,image/png,image/svg+xml" aria-hidden="true">
+
+<div class="top-buttons">
+  <button class="top-btn" id="themeToggle" title="Cambiar tema" aria-label="Alternar esquema de color claro/oscuro">CLARO</button>
+  <button class="top-btn" id="modeToggle" title="Cambiar modalidad" aria-label="Alternar modalidad del trazo">ACCESIBLE</button>
+  <!-- Botón guardar hacia Bitácora / Exportar con reflexión -->
+  <button class="top-btn" id="finishToggle" title="Finalizar obra" aria-label="Finalizar e ir a reflexión">FINALIZAR</button>
+</div>
+
+<!-- Panel: Tipografia -->
+<div class="panel" id="fontPanel" role="tabpanel" aria-label="Panel de Tipografía">
+  <h3>Tipografía</h3>
+  <button class="font-option selected" data-font="Georgia, serif" style="font-family:Georgia,serif">Georgia</button>
+  <button class="font-option" data-font="'Times New Roman', Times, serif" style="font-family:'Times New Roman',serif">Times</button>
+  <button class="font-option" data-font="'Courier New', Courier, monospace" style="font-family:'Courier New',monospace">Courier</button>
+  <button class="font-option" data-font="Arial, Helvetica, sans-serif" style="font-family:Arial,sans-serif">Arial</button>
+  <button class="font-option" data-font="Verdana, Geneva, sans-serif" style="font-family:Verdana,sans-serif">Verdana</button>
+  <div class="panel-label" style="margin-top:14px">Peso</div>
+  <div class="weight-toggle">
+    <button class="weight-btn active" data-weight="normal">Normal</button>
+    <button class="weight-btn" data-weight="bold">Bold</button>
+  </div>
+</div>
+
+<!-- Panel: Color -->
+<div class="panel" id="colorPanel" role="tabpanel" aria-label="Panel de Color">
+  <h3>Color</h3>
+  <div class="color-grid">
+    <button class="color-option selected" data-color="#000000" style="background:#000000" title="Negro" aria-label="Color negro"></button>
+    <button class="color-option" data-color="#c0392b" style="background:#c0392b" title="Rojo" aria-label="Color rojo"></button>
+    <button class="color-option" data-color="#2980b9" style="background:#2980b9" title="Azul" aria-label="Color azul"></button>
+    <button class="color-option" data-color="#27ae60" style="background:#27ae60" title="Verde" aria-label="Color verde"></button>
+    <button class="color-option" data-color="#e67e22" style="background:#e67e22" title="Naranja" aria-label="Color naranja"></button>
+    <button class="color-option" data-color="#8e44ad" style="background:#8e44ad" title="Morado" aria-label="Color morado"></button>
+  </div>
+  <div class="color-input-row">
+    <input type="text" class="color-input" id="hexInput" placeholder="#RRGGBB" aria-label="Color HEX">
+    <input type="text" class="color-input" id="rgbInput" placeholder="R,G,B" aria-label="Color RGB">
+  </div>
+  <button class="eyedropper-btn" id="eyedropperBtn" aria-label="Cuentagotas">Cuentagotas</button>
+</div>
+
+<!-- Panel: Grosor -->
+<div class="panel" id="thicknessPanel" role="tabpanel" aria-label="Panel de Grosor">
+  <h3>Grosor</h3>
+  <div class="slider-container">
+    <div class="panel-label">Multiplicador de tamaño</div>
+    <div class="slider-row">
+      <input type="range" id="thicknessSlider" min="0.5" max="3" step="0.1" value="1" aria-label="Multiplicador de tamaño de fuente">
+      <span class="slider-val" id="thicknessVal">1.0x</span>
+    </div>
+  </div>
+  <div class="slider-container">
+    <div class="panel-label">Escala de distancia</div>
+    <div class="slider-row">
+      <input type="range" id="distScaleSlider" min="1" max="5" step="0.5" value="2" aria-label="Escala de distancia del ratón">
+      <span class="slider-val" id="distScaleVal">2.0</span>
+    </div>
+  </div>
+  <div class="slider-container">
+    <div class="panel-label">Densidad de espaciado</div>
+    <div class="slider-row">
+      <input type="range" id="densitySlider" min="0.8" max="2" step="0.1" value="1" aria-label="Densidad del espaciado de texto">
+      <span class="slider-val" id="densityVal">1.0</span>
+    </div>
+  </div>
+  <div class="slider-container">
+    <div class="panel-label">Interlineado</div>
+    <div class="slider-row">
+      <input type="range" id="leadingSlider" min="1" max="2" step="0.1" value="1" aria-label="Interlineado dinámico">
+      <span class="slider-val" id="leadingVal">1.0</span>
+    </div>
+  </div>
+</div>
+
+<!-- Panel: Texto -->
+<div class="panel" id="textPanel" role="tabpanel" aria-label="Panel de Texto">
+  <h3>Texto</h3>
+  <textarea id="textInput" placeholder="Escribe las palabras..." aria-label="Texto a dibujar">amor es arte</textarea>
+  <div class="panel-label" style="margin-top:10px">Modo: <span id="splitMode">palabras</span></div>
+  <div style="display: flex; gap: 8px; margin-top: 10px;">
+    <button class="speak-btn eyedropper-btn" id="speakBtn" style="flex: 1;" aria-label="Leer dibujo">🔊 Leer Texto</button>
+    <button class="speak-btn eyedropper-btn" id="generateTextBtn" style="flex: 1;" aria-label="Generar Poesía Híbrida">🤖 Generar</button>
+  </div>
+
+  <div style="margin-top:20px; border-top: 1px solid var(--border-color, #333); padding-top: 15px;">
+    <h3>Archivos</h3>
+    <p style="font-size:12px;color:var(--cmd-color);margin-bottom:8px">Importar base y exportar obra:</p>
+    <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+      <label class="template-btn" style="cursor:pointer; flex: 1; text-align: center;">
+        <input type="file" id="importBgInput" accept="image/png, image/jpeg, image/svg+xml" style="display:none;" />
+        Importar Base
+      </label>
+      <button class="template-btn" id="clearBgBtn" style="flex: 1;">Quitar Fondo</button>
+    </div>
+    <div style="display: flex; gap: 8px;">
+      <button class="template-btn" id="exportPngBtn" style="flex: 1;" title="Exportar PNG (Ctrl+G)">PNG</button>
+      <button class="template-btn" id="exportSvgBtn" style="flex: 1;" title="Exportar SVG (Ctrl+S)">SVG</button>
+    </div>
+  </div>
+</div>
+
+<!-- Panel: Trazo Plantillas (Pedagógico) -->
+<div class="panel" id="trazoPanel" role="tabpanel" aria-label="Panel de Plantillas de Trazo">
+  <h3>Modo Trazo</h3>
+  <p style="font-size:12px;color:var(--cmd-color);margin-bottom:14px">Plantillas guía de apoyo:</p>
+  <div class="template-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+    <button class="template-btn" data-template="none">Nada</button>
+    <button class="template-btn" data-template="circle">Círculo</button>
+    <button class="template-btn" data-template="square">Cuadrado</button>
+    <button class="template-btn" data-template="hexagon">Hexágono</button>
+    <button class="template-btn" data-template="star">Estrella</button>
+    <button class="template-btn" data-template="heart">Corazón</button>
+    <button class="template-btn" data-template="spiral">Espiral</button>
+    <button class="template-btn" data-template="triangle">Triángulo</button>
+  </div>
+
+  <div style="margin-top: 20px; border-top: 1px solid var(--border-color, #333); padding-top: 15px;">
+    <h4 style="margin-top: 0;">Ajustes de Plantilla / Fondo</h4>
+    
+    <div class="slider-container" style="margin-top:10px;">
+      <div class="panel-label">Opacidad</div>
+      <div class="slider-row">
+        <input type="range" id="tplOpacitySlider" min="0" max="1" step="0.05" value="0.15" aria-label="Opacidad">
+        <span class="slider-val" id="tplOpacityVal">15%</span>
+      </div>
+    </div>
+    
+    <div class="slider-container">
+      <div class="panel-label">Escala (Tamaño)</div>
+      <div class="slider-row">
+        <input type="range" id="tplScaleSlider" min="0.1" max="5.0" step="0.1" value="1.0" aria-label="Escala de plantilla">
+        <span class="slider-val" id="tplScaleVal">1.0x</span>
+      </div>
+    </div>
+    
+    <div class="slider-container">
+      <div class="panel-label">Posición Horizontal (X)</div>
+      <div class="slider-row">
+        <input type="range" id="tplOffsetXSlider" min="-100" max="100" step="1" value="0" aria-label="Posición X">
+        <span class="slider-val" id="tplOffsetXVal">0%</span>
+      </div>
+    </div>
+
+    <div class="slider-container">
+      <div class="panel-label">Posición Vertical (Y)</div>
+      <div class="slider-row">
+        <input type="range" id="tplOffsetYSlider" min="-100" max="100" step="1" value="0" aria-label="Posición Y">
+        <span class="slider-val" id="tplOffsetYVal">0%</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Panel: Limpiar -->
+<div class="panel" id="clearPanel" role="tabpanel" aria-label="Panel de Limpieza">
+  <h3>Limpiar</h3>
+  <p style="font-size:12px;color:var(--cmd-color);margin-bottom:14px">
+    Borra todo el contenido del lienzo y la imagen de fondo importada.
+  </p>
+  <button class="clear-btn" id="clearBtn" aria-label="Limpiar todo el lienzo">Limpiar Lienzo</button>
+</div>
+
+<!-- Modal Reflexión -->
+<div id="reflectionModal" class="modal-overlay" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="reflectionTitle">
+  <div class="modal-card">
+    <h2 id="reflectionTitle">¿Cómo te sientes con tu creación?</h2>
+    <div class="mood-selector" style="display: flex; gap: 15px; justify-content: center; margin: 20px 0;">
+      <button class="mood-btn" data-mood="feliz" aria-label="Me siento feliz" style="font-size: 32px; background: none; border: none; cursor: pointer;">😊</button>
+      <button class="mood-btn" data-mood="calma" aria-label="Me siento en calma" style="font-size: 32px; background: none; border: none; cursor: pointer;">😌</button>
+      <button class="mood-btn" data-mood="energia" aria-label="Siento energía" style="font-size: 32px; background: none; border: none; cursor: pointer;">⚡</button>
+    </div>
+    <input type="text" id="reflectionInput" placeholder="Dale un título a tu obra..." style="width: 100%; padding: 10px; margin-bottom: 20px; border-radius: 6px; border: 1px solid var(--input-border); background: var(--input-bg); color: var(--fg);" aria-label="Título de la obra">
+    <button class="eyedropper-btn" id="closeReflectionBtn">Guardar en Bitácora</button>
+    <p style="margin-top:20px; font-size:10px; color:#999;">Motor inspirado libremente en el genio de Tim Holman.</p>
+  </div>
+</div>
+
+</body>
+</html>

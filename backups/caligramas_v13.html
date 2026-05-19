@@ -1,0 +1,1380 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Caligramas v13</title>
+<style>
+:root {
+  --bg: #f5f5f5;
+  --fg: #222;
+  --canvas-bg: #ffffff;
+  --ui-panel: rgba(255,255,255,0.98);
+  --ui-border: #ddd;
+  --ui-border-outer: #f0f0f0;
+  --ui-hover: rgba(0,0,0,0.9);
+  --ui-active: #333;
+  --ui-active-border: #555;
+  --tab-bg: rgba(0,0,0,0.8);
+  --tab-color: #fff;
+  --tab-hover-border: #333;
+  --input-bg: #fafafa;
+  --input-border: #e0e0e0;
+  --input-focus: #333;
+  --font-selected-bg: #333;
+  --font-selected-fg: #fff;
+  --cmd-bg: rgba(255,255,255,0.92);
+  --cmd-color: #888;
+  --cmd-active-color: #333;
+  --indicator-bg: rgba(255,255,255,0.92);
+  --indicator-color: #999;
+  --danger: #e74c3c;
+  --accent: #4A90E2;
+  --shadow: rgba(0,0,0,0.08);
+  --panel-shadow: rgba(0,0,0,0.15);
+}
+
+[data-theme="dark"] {
+  --bg: #1a1a1a;
+  --fg: #e8e8e8;
+  --canvas-bg: #333333;
+  --ui-panel: rgba(30,30,30,0.98);
+  --ui-border: #555;
+  --ui-border-outer: #333;
+  --ui-hover: rgba(255,255,255,0.92);
+  --ui-active: #ddd;
+  --ui-active-border: #bbb;
+  --tab-bg: rgba(255,255,255,0.85);
+  --tab-color: #222;
+  --tab-hover-border: #ddd;
+  --input-bg: #444;
+  --input-border: #555;
+  --input-focus: #ddd;
+  --font-selected-bg: #ddd;
+  --font-selected-fg: #222;
+  --cmd-bg: rgba(20,20,20,0.92);
+  --cmd-color: #777;
+  --cmd-active-color: #ddd;
+  --indicator-bg: rgba(20,20,20,0.92);
+  --indicator-color: #666;
+  --danger: #c0392b;
+  --shadow: rgba(0,0,0,0.3);
+  --panel-shadow: rgba(0,0,0,0.4);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Courier New', Courier, monospace;
+  background: var(--bg);
+  color: var(--fg);
+  height: 100vh;
+  overflow: hidden;
+  transition: background 0.3s, color 0.3s;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* ---- Workspace ---- */
+.workspace {
+  position: absolute;
+  top: 40px;
+  left: 120px;
+  right: 40px;
+  bottom: 80px;
+  background: var(--canvas-bg);
+  border: 1px solid var(--ui-border);
+  box-shadow: 0 2px 24px var(--shadow);
+  cursor: crosshair;
+  transition: background 0.3s, border-color 0.3s;
+  overflow: hidden;
+}
+
+.workspace::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border: 1px solid var(--ui-border);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.workspace-border {
+  position: absolute;
+  top: 39px;
+  left: 119px;
+  right: 39px;
+  bottom: 79px;
+  border: 2px solid var(--ui-border);
+  pointer-events: none;
+  border-radius: 2px;
+  transition: border-color 0.3s;
+}
+
+.workspace-border::before {
+  content: '';
+  position: absolute;
+  top: -6px; left: -6px; right: -6px; bottom: -6px;
+  border: 1px solid var(--ui-border-outer);
+  border-radius: 4px;
+  transition: border-color 0.3s;
+}
+
+#canvas {
+  display: block;
+  position: absolute;
+  inset: 0;
+}
+
+/* ---- Sidebar ---- */
+.sidebar {
+  position: fixed;
+  left: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.tab {
+  width: 60px;
+  height: 60px;
+  background: var(--tab-bg);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  color: var(--tab-color);
+  font-size: 20px;
+  font-family: 'Courier New', Courier, monospace;
+  font-weight: bold;
+  border: 2px solid transparent;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.tab:hover {
+  background: var(--ui-hover);
+  transform: scale(1.06);
+  border-color: var(--tab-hover-border);
+}
+
+.tab.active {
+  background: var(--ui-active);
+  border-color: var(--ui-active-border);
+}
+
+.tab.hidden-tab { display: none; }
+
+/* ---- Panels ---- */
+.panel {
+  position: absolute;
+  left: 80px;
+  top: 50%;
+  transform: translateY(-50%) translateX(-15px);
+  background: var(--ui-panel);
+  border: 1px solid var(--ui-border);
+  border-radius: 12px;
+  padding: 24px;
+  min-width: 230px;
+  box-shadow: 0 8px 30px var(--panel-shadow);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s cubic-bezier(0.4,0,0.2,1), 
+              transform 0.3s cubic-bezier(0.4,0,0.2,1),
+              visibility 0.3s;
+  z-index: 1001;
+}
+
+.panel.show {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(-50%) translateX(0);
+}
+
+.panel h3 {
+  margin: 0 0 16px 0;
+  font-size: 12px;
+  color: var(--fg);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  font-weight: 700;
+}
+
+.panel-label {
+  font-size: 11px;
+  color: var(--cmd-color);
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.panel-value {
+  font-size: 13px;
+  color: var(--fg);
+  font-weight: bold;
+  margin-bottom: 14px;
+}
+
+/* Font options */
+.font-option {
+  padding: 10px 14px;
+  margin: 5px 0;
+  border: 1px solid var(--input-border);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 15px;
+  background: var(--ui-panel);
+}
+
+.font-option:hover, .font-option.selected {
+  background: var(--font-selected-bg);
+  color: var(--font-selected-fg);
+  border-color: var(--font-selected-bg);
+}
+
+/* Weight toggle */
+.weight-toggle {
+  display: flex;
+  gap: 0;
+  margin-top: 12px;
+  border: 1px solid var(--input-border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.weight-btn {
+  flex: 1;
+  padding: 8px 12px;
+  border: none;
+  background: var(--input-bg);
+  color: var(--fg);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 12px;
+  transition: all 0.2s;
+}
+
+.weight-btn.active {
+  background: var(--ui-active);
+  color: var(--font-selected-fg);
+}
+
+/* Color grid */
+.color-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.color-option {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 3px solid transparent;
+  transition: all 0.2s;
+  margin: 0 auto;
+}
+
+.color-option:hover {
+  transform: scale(1.12);
+  border-color: var(--cmd-color);
+}
+
+.color-option.selected {
+  border-color: var(--ui-active);
+  transform: scale(1.15);
+  box-shadow: 0 0 0 2px var(--ui-active);
+}
+
+.color-input-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.color-input {
+  flex: 1;
+  padding: 7px 10px;
+  border: 1px solid var(--input-border);
+  border-radius: 6px;
+  background: var(--input-bg);
+  color: var(--fg);
+  font-family: inherit;
+  font-size: 12px;
+  transition: border-color 0.2s;
+}
+
+.color-input:focus {
+  outline: none;
+  border-color: var(--input-focus);
+}
+
+.eyedropper-btn {
+  width: 100%;
+  padding: 9px 12px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 12px;
+  transition: opacity 0.2s;
+}
+
+.eyedropper-btn:hover { opacity: 0.85; }
+
+/* Sliders */
+.slider-container {
+  margin-bottom: 16px;
+}
+
+.slider-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.slider-row input[type="range"] {
+  flex: 1;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 4px;
+  background: var(--input-border);
+  border-radius: 2px;
+  outline: none;
+}
+
+.slider-row input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--ui-active);
+  cursor: pointer;
+}
+
+.slider-row input[type="range"]::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--ui-active);
+  cursor: pointer;
+  border: none;
+}
+
+.slider-val {
+  font-size: 13px;
+  font-weight: bold;
+  min-width: 40px;
+  text-align: right;
+  color: var(--fg);
+}
+
+/* Textarea */
+textarea {
+  width: 100%;
+  min-height: 80px;
+  border: 1px solid var(--input-border);
+  border-radius: 6px;
+  padding: 10px 12px;
+  font-family: inherit;
+  font-size: 14px;
+  resize: vertical;
+  background: var(--input-bg);
+  color: var(--fg);
+  transition: border-color 0.2s, background 0.2s;
+}
+
+textarea:focus {
+  outline: none;
+  border-color: var(--input-focus);
+  background: var(--ui-panel);
+}
+
+/* Clear button */
+.clear-btn {
+  width: 100%;
+  padding: 11px 14px;
+  background: var(--danger);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: bold;
+  transition: opacity 0.2s;
+}
+
+.clear-btn:hover { opacity: 0.85; }
+
+/* ---- Top Buttons ---- */
+.top-buttons {
+  position: fixed;
+  top: 16px;
+  right: 20px;
+  display: flex;
+  gap: 8px;
+  z-index: 1002;
+}
+
+.top-btn {
+  background: var(--tab-bg);
+  color: var(--tab-color);
+  border: none;
+  border-radius: 6px;
+  padding: 7px 14px;
+  cursor: pointer;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 11px;
+  font-weight: bold;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  transition: opacity 0.2s;
+  white-space: nowrap;
+}
+
+.top-btn:hover { opacity: 0.8; }
+
+/* ---- Speed Indicator ---- */
+.speed-indicator {
+  position: fixed;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 11px;
+  color: var(--indicator-color);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.25s;
+  background: var(--indicator-bg);
+  padding: 7px 18px;
+  border-radius: 16px;
+  border: 1px solid var(--ui-border);
+  z-index: 1000;
+  white-space: nowrap;
+}
+
+.speed-indicator.show { opacity: 1; }
+
+/* ---- Command Bar ---- */
+.commands {
+  position: fixed;
+  bottom: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 10px;
+  color: var(--cmd-color);
+  display: flex;
+  gap: 30px;
+  pointer-events: none;
+  z-index: 1000;
+  background: var(--cmd-bg);
+  padding: 10px 24px;
+  border-radius: 20px;
+  border: 1px solid var(--ui-border);
+  transition: background 0.3s, color 0.3s, border-color 0.3s;
+}
+
+.command {
+  opacity: 0.7;
+  transition: all 0.3s;
+  white-space: nowrap;
+  letter-spacing: 0.5px;
+}
+
+.command.active {
+  opacity: 1;
+  color: var(--cmd-active-color);
+  transform: scale(1.05);
+}
+
+.command kbd {
+  font-family: inherit;
+  font-size: 10px;
+  background: var(--input-border);
+  padding: 1px 5px;
+  border-radius: 3px;
+  margin-right: 4px;
+}
+
+/* ---- File Input ---- */
+#fileInput { display: none; }
+
+/* ---- Responsive ---- */
+@media (max-width: 768px) {
+  .workspace {
+    left: 80px;
+    right: 16px;
+    top: 32px;
+    bottom: 90px;
+  }
+  .workspace-border {
+    left: 79px;
+    right: 15px;
+    top: 31px;
+    bottom: 89px;
+  }
+  .sidebar { left: 8px; gap: 12px; }
+  .tab { width: 48px; height: 48px; font-size: 17px; }
+  .panel { left: 64px; min-width: 190px; padding: 18px; }
+  .commands {
+    flex-direction: column;
+    gap: 6px;
+    font-size: 9px;
+    bottom: 10px;
+    padding: 8px 16px;
+  }
+  .top-buttons {
+    top: 8px;
+    right: 8px;
+    gap: 6px;
+  }
+  .top-btn { font-size: 9px; padding: 5px 10px; }
+  .speed-indicator { font-size: 9px; padding: 5px 12px; top: 8px; }
+}
+
+/* ---- Scrollbar for panels ---- */
+.panel-scroll {
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.panel-scroll::-webkit-scrollbar { width: 4px; }
+.panel-scroll::-webkit-scrollbar-track { background: transparent; }
+.panel-scroll::-webkit-scrollbar-thumb { background: var(--input-border); border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<div class="workspace-border"></div>
+
+<div class="workspace" id="workspace">
+  <canvas id="canvas" aria-label="Lienzo para dibujar caligramas"></canvas>
+</div>
+
+<div class="sidebar" id="sidebar">
+  <div class="tab" data-panel="font" title="Tipografia">A</div>
+  <div class="tab" data-panel="color" title="Color">&#9679;</div>
+  <div class="tab hidden-tab" data-panel="thickness" id="thicknessTab" title="Grosor">G</div>
+  <div class="tab" data-panel="text" title="Texto">T</div>
+  <div class="tab hidden-tab" data-panel="clear" id="clearTab" title="Limpiar">&#10005;</div>
+</div>
+
+<div class="commands">
+  <div class="command" data-idx="0"><kbd>Ctrl+G</kbd> PNG</div>
+  <div class="command" data-idx="1"><kbd>Ctrl+S</kbd> SVG</div>
+  <div class="command" data-idx="2"><kbd>Ctrl+I</kbd> Importar</div>
+  <div class="command" data-idx="3"><kbd>Ctrl+Z</kbd> Deshacer</div>
+  <div class="command" data-idx="4"><kbd>Ctrl+Y</kbd> Rehacer</div>
+</div>
+
+<div class="speed-indicator" id="speedIndicator">
+  dist: <span id="distVal">0</span> &nbsp;|&nbsp; size: <span id="sizeVal">0</span>px
+</div>
+
+<input type="file" id="fileInput" accept=".png,.svg,image/png,image/svg+xml" aria-hidden="true">
+
+<div class="top-buttons">
+  <button class="top-btn" id="themeToggle" title="Cambiar tema">CLARO</button>
+  <button class="top-btn" id="modeToggle" title="Cambiar modalidad">ACCESIBLE</button>
+</div>
+
+<!-- Panel: Tipografia -->
+<div class="panel" id="fontPanel">
+  <h3>Tipografia</h3>
+  <div class="font-option selected" data-font="Georgia, serif" style="font-family:Georgia,serif">Georgia</div>
+  <div class="font-option" data-font="'Times New Roman', Times, serif" style="font-family:'Times New Roman',serif">Times</div>
+  <div class="font-option" data-font="'Courier New', Courier, monospace" style="font-family:'Courier New',monospace">Courier</div>
+  <div class="font-option" data-font="Arial, Helvetica, sans-serif" style="font-family:Arial,sans-serif">Arial</div>
+  <div class="font-option" data-font="Verdana, Geneva, sans-serif" style="font-family:Verdana,sans-serif">Verdana</div>
+  <div class="panel-label" style="margin-top:14px">Peso</div>
+  <div class="weight-toggle">
+    <button class="weight-btn active" data-weight="normal">Normal</button>
+    <button class="weight-btn" data-weight="bold">Bold</button>
+  </div>
+</div>
+
+<!-- Panel: Color -->
+<div class="panel" id="colorPanel">
+  <h3>Color</h3>
+  <div class="color-grid">
+    <div class="color-option selected" data-color="#000000" style="background:#000000" title="#000000"></div>
+    <div class="color-option" data-color="#c0392b" style="background:#c0392b" title="#c0392b"></div>
+    <div class="color-option" data-color="#2980b9" style="background:#2980b9" title="#2980b9"></div>
+    <div class="color-option" data-color="#27ae60" style="background:#27ae60" title="#27ae60"></div>
+    <div class="color-option" data-color="#e67e22" style="background:#e67e22" title="#e67e22"></div>
+    <div class="color-option" data-color="#8e44ad" style="background:#8e44ad" title="#8e44ad"></div>
+  </div>
+  <div class="color-input-row">
+    <input type="text" class="color-input" id="hexInput" placeholder="#RRGGBB" aria-label="Color HEX">
+    <input type="text" class="color-input" id="rgbInput" placeholder="R,G,B" aria-label="Color RGB">
+  </div>
+  <button class="eyedropper-btn" id="eyedropperBtn">Cuentagotas</button>
+</div>
+
+<!-- Panel: Grosor -->
+<div class="panel" id="thicknessPanel">
+  <h3>Grosor</h3>
+  <div class="slider-container">
+    <div class="panel-label">Multiplicador de tamano</div>
+    <div class="slider-row">
+      <input type="range" id="thicknessSlider" min="0.5" max="3" step="0.1" value="1">
+      <span class="slider-val" id="thicknessVal">1.0x</span>
+    </div>
+  </div>
+  <div class="slider-container">
+    <div class="panel-label">Escala de distancia</div>
+    <div class="slider-row">
+      <input type="range" id="distScaleSlider" min="1" max="5" step="0.5" value="2">
+      <span class="slider-val" id="distScaleVal">2.0</span>
+    </div>
+  </div>
+  <div class="slider-container">
+    <div class="panel-label">Densidad de espaciado</div>
+    <div class="slider-row">
+      <input type="range" id="densitySlider" min="0.8" max="2" step="0.1" value="1">
+      <span class="slider-val" id="densityVal">1.0</span>
+    </div>
+  </div>
+  <div class="slider-container">
+    <div class="panel-label">Interlineado</div>
+    <div class="slider-row">
+      <input type="range" id="leadingSlider" min="1" max="2" step="0.1" value="1">
+      <span class="slider-val" id="leadingVal">1.0</span>
+    </div>
+  </div>
+</div>
+
+<!-- Panel: Texto -->
+<div class="panel" id="textPanel">
+  <h3>Texto</h3>
+  <textarea id="textInput" placeholder="Escribe las palabras...">amor es arte</textarea>
+  <div class="panel-label" style="margin-top:10px">Modo: <span id="splitMode">palabras</span></div>
+</div>
+
+<!-- Panel: Limpiar -->
+<div class="panel" id="clearPanel">
+  <h3>Limpiar</h3>
+  <p style="font-size:12px;color:var(--cmd-color);margin-bottom:14px">
+    Borra todo el contenido del lienzo y la imagen de fondo importada.
+  </p>
+  <button class="clear-btn" id="clearBtn">Limpiar Lienzo</button>
+</div>
+
+<script>
+(function() {
+  'use strict';
+
+  /* =========================================
+   *  Caligramas v13 — Holman Distance Engine
+   * ========================================= */
+
+  class Caligramas {
+    constructor() {
+      // Canvas
+      this.canvas = document.getElementById('canvas');
+      this.ctx = this.canvas.getContext('2d');
+      this.workspace = document.getElementById('workspace');
+
+      // --- Holman State ---
+      this.position = { x: 0, y: 0 };   // last placed character
+      this.mouse = { x: 0, y: 0, down: false };
+      this.textIndex = 0;
+
+      // --- Drawing Config ---
+      this.text = 'amor es arte';
+      this.textArray = [];
+      this.fontFamily = 'Georgia, serif';
+      this.fontWeight = 'normal';
+      this.color = '#000000';
+      this.minFontSize = 8;
+      this.maxFontSize = 200;
+      this.angleDistortion = 0.01;
+
+      // Enhanced controls
+      this.distScale = 2;       // divisor for fontSize calc (1-5, default 2)
+      this.spacingDensity = 1.0; // multiplier on stepSize (0.8-2.0)
+      this.leadingFactor = 1.0;  // vertical spacing multiplier (1.0-2.0)
+      this.thicknessMultiplier = 1.0; // size multiplier (0.5-3.0)
+
+      // --- Mode ---
+      this.isAccessibleMode = true; // default: accessible
+      this.isDarkTheme = false;
+
+      // --- Operations (for SVG export) ---
+      this.operations = [];
+
+      // --- Undo/Redo ---
+      this.history = [];
+      this.historyIndex = -1;
+      this.maxHistory = 50;
+
+      // --- Background image ---
+      this.bgImage = null;
+      this.bgImageSrc = null; // for SVG export
+
+      // --- Eyedropper ---
+      this.isEyedropperActive = false;
+
+      // --- Init ---
+      this.setupCanvas();
+      this.updateTextArray();
+      this.saveState();
+      this.bindEvents();
+      this.updateModeUI();
+
+      // Start render loop (always running, only draws when mouse.down)
+      this.startLoop();
+    }
+
+    /* ---------- Canvas Setup ---------- */
+
+    setupCanvas() {
+      const rect = this.workspace.getBoundingClientRect();
+      this.canvas.width = rect.width;
+      this.canvas.height = rect.height;
+    }
+
+    resizeCanvas() {
+      // Save current drawing
+      let savedData = null;
+      if (this.canvas.width > 0 && this.canvas.height > 0) {
+        savedData = this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height);
+      }
+
+      const rect = this.workspace.getBoundingClientRect();
+      this.canvas.width = rect.width;
+      this.canvas.height = rect.height;
+
+      // Restore drawing
+      if (savedData) {
+        this.ctx.putImageData(savedData, 0, 0);
+      }
+
+      // Redraw background image
+      this.drawBgImage();
+    }
+
+    /* ---------- Text Array ---------- */
+
+    updateTextArray() {
+      const trimmed = this.text.trim();
+      if (!trimmed) {
+        this.textArray = ['a'];
+        return;
+      }
+      if (this.isAccessibleMode) {
+        this.textArray = trimmed.split(/\s+/);
+      } else {
+        this.textArray = trimmed.split('');
+      }
+      this.textIndex = 0;
+
+      // Update UI label
+      const label = document.getElementById('splitMode');
+      if (label) label.textContent = this.isAccessibleMode ? 'palabras' : 'caracteres';
+    }
+
+    /* ---------- Holman Render Loop ---------- */
+
+    startLoop() {
+      const loop = () => {
+        this.draw();
+        requestAnimationFrame(loop);
+      };
+      requestAnimationFrame(loop);
+    }
+
+    draw() {
+      if (!this.mouse.down) return;
+      if (this.textArray.length === 0) return;
+
+      var newDistance = this.dist(this.position, this.mouse);
+
+      // Holman: fontSize = minFontSize + distance / scale
+      var fontSize = this.minFontSize + newDistance / this.distScale;
+
+      // Apply thickness multiplier
+      fontSize = fontSize * this.thicknessMultiplier;
+
+      if (fontSize > this.maxFontSize) fontSize = this.maxFontSize;
+
+      // Get current text unit (word or character)
+      var unit = this.textArray[this.textIndex];
+
+      // Build font string for measurement
+      var fontStr = this.fontWeight + ' ' + fontSize + 'px ' + this.fontFamily;
+      var stepSize = this.measureWidth(unit, fontStr);
+
+      // Apply spacing density
+      stepSize = stepSize * this.spacingDensity;
+
+      // Apply leading factor for mostly-vertical movement
+      var angle = Math.atan2(this.mouse.y - this.position.y, this.mouse.x - this.position.x);
+      if (Math.abs(Math.sin(angle)) > 0.7) {
+        stepSize = stepSize * this.leadingFactor;
+      }
+
+      // Holman: only place when distance exceeds step size
+      if (newDistance > stepSize) {
+        // Calculate rotation with distortion
+        var rotation = angle + (Math.random() * (this.angleDistortion * 2) - this.angleDistortion);
+
+        // Draw on canvas
+        this.ctx.save();
+        this.ctx.translate(this.position.x, this.position.y);
+        this.ctx.rotate(rotation);
+        this.ctx.font = fontStr;
+        this.ctx.fillStyle = this.color;
+        this.ctx.fillText(unit, 0, 0);
+        this.ctx.restore();
+
+        // Record operation for SVG export
+        this.operations.push({
+          char: unit,
+          x: this.position.x,
+          y: this.position.y,
+          fontSize: fontSize,
+          angle: rotation,
+          fontFamily: this.fontFamily,
+          fontWeight: this.fontWeight,
+          color: this.color
+        });
+
+        // Advance text index
+        this.textIndex++;
+        if (this.textIndex >= this.textArray.length) this.textIndex = 0;
+
+        // Move position forward by stepSize in direction of angle
+        this.position.x = this.position.x + Math.cos(angle) * stepSize;
+        this.position.y = this.position.y + Math.sin(angle) * stepSize;
+
+        // Update speed indicator
+        this.showIndicator(newDistance, fontSize);
+      }
+    }
+
+    /* ---------- Utility ---------- */
+
+    dist(pt1, pt2) {
+      var dx = pt2.x - pt1.x;
+      var dy = pt2.y - pt1.y;
+      return Math.sqrt(dx * dx + dy * dy);
+    }
+
+    measureWidth(str, fontStr) {
+      this.ctx.font = fontStr;
+      return this.ctx.measureText(str).width;
+    }
+
+    showIndicator(distance, fontSize) {
+      var el = document.getElementById('speedIndicator');
+      document.getElementById('distVal').textContent = Math.round(distance);
+      document.getElementById('sizeVal').textContent = Math.round(fontSize);
+      if (!el.classList.contains('show')) el.classList.add('show');
+    }
+
+    hideIndicator() {
+      document.getElementById('speedIndicator').classList.remove('show');
+    }
+
+    /* ---------- Mouse Events ---------- */
+
+    getCanvasPos(e) {
+      var rect = this.canvas.getBoundingClientRect();
+      return {
+        x: (e.clientX || e.pageX) - rect.left,
+        y: (e.clientY || e.pageY) - rect.top
+      };
+    }
+
+    onPointerDown(e) {
+      // Handle eyedropper
+      if (this.isEyedropperActive) {
+        this.pickColor(e);
+        return;
+      }
+
+      var pos = this.getCanvasPos(e);
+      this.mouse.down = true;
+      this.position.x = pos.x;
+      this.position.y = pos.y;
+      this.mouse.x = pos.x;
+      this.mouse.y = pos.y;
+    }
+
+    onPointerMove(e) {
+      var pos = this.getCanvasPos(e);
+      this.mouse.x = pos.x;
+      this.mouse.y = pos.y;
+    }
+
+    onPointerUp() {
+      if (this.mouse.down) {
+        this.mouse.down = false;
+        this.saveState();
+        this.hideIndicator();
+      }
+    }
+
+    pickColor(e) {
+      var pos = this.getCanvasPos(e);
+      var pixel = this.ctx.getImageData(Math.round(pos.x), Math.round(pos.y), 1, 1).data;
+      this.color = 'rgb(' + pixel[0] + ',' + pixel[1] + ',' + pixel[2] + ')';
+      this.isEyedropperActive = false;
+      this.canvas.style.cursor = 'crosshair';
+      // Update UI: deselect color options, update hex input
+      document.querySelectorAll('.color-option').forEach(function(o) { o.classList.remove('selected'); });
+      document.getElementById('hexInput').value = this.rgbToHex(pixel[0], pixel[1], pixel[2]);
+      document.getElementById('rgbInput').value = pixel[0] + ',' + pixel[1] + ',' + pixel[2];
+    }
+
+    rgbToHex(r, g, b) {
+      return '#' + [r, g, b].map(function(x) { return x.toString(16).padStart(2, '0'); }).join('');
+    }
+
+    /* ---------- Touch Events ---------- */
+
+    onTouchStart(e) {
+      e.preventDefault();
+      var touch = e.touches[0];
+      this.onPointerDown(touch);
+    }
+
+    onTouchMove(e) {
+      e.preventDefault();
+      var touch = e.touches[0];
+      this.onPointerMove(touch);
+    }
+
+    onTouchEnd(e) {
+      e.preventDefault();
+      this.onPointerUp();
+    }
+
+    /* ---------- Undo / Redo ---------- */
+
+    saveState() {
+      // Trim future states
+      if (this.historyIndex < this.history.length - 1) {
+        this.history = this.history.slice(0, this.historyIndex + 1);
+      }
+
+      this.history.push({
+        dataUrl: this.canvas.toDataURL(),
+        opsLength: this.operations.length
+      });
+
+      if (this.history.length > this.maxHistory) {
+        this.history.shift();
+      } else {
+        this.historyIndex++;
+      }
+    }
+
+    undo() {
+      if (this.historyIndex <= 0) return;
+      this.historyIndex--;
+      this.restoreState(this.history[this.historyIndex]);
+    }
+
+    redo() {
+      if (this.historyIndex >= this.history.length - 1) return;
+      this.historyIndex++;
+      this.restoreState(this.history[this.historyIndex]);
+    }
+
+    restoreState(state) {
+      var img = new Image();
+      var self = this;
+      img.onload = function() {
+        self.ctx.clearRect(0, 0, self.canvas.width, self.canvas.height);
+        self.drawBgImage();
+        self.ctx.drawImage(img, 0, 0);
+      };
+      img.src = state.dataUrl;
+
+      // Truncate operations
+      this.operations = this.operations.slice(0, state.opsLength);
+    }
+
+    /* ---------- Export PNG ---------- */
+
+    exportPNG() {
+      var tempCanvas = document.createElement('canvas');
+      var tempCtx = tempCanvas.getContext('2d');
+      tempCanvas.width = this.canvas.width;
+      tempCanvas.height = this.canvas.height;
+
+      // White background
+      tempCtx.fillStyle = '#ffffff';
+      tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+
+      // Draw canvas content
+      tempCtx.drawImage(this.canvas, 0, 0);
+
+      var link = document.createElement('a');
+      link.download = 'caligrama_' + Date.now() + '.png';
+      link.href = tempCanvas.toDataURL('image/png');
+      link.click();
+    }
+
+    /* ---------- Export SVG ---------- */
+
+    exportSVG() {
+      var w = this.canvas.width;
+      var h = this.canvas.height;
+      var lines = [];
+      lines.push('<?xml version="1.0" encoding="UTF-8"?>');
+      lines.push('<svg xmlns="http://www.w3.org/2000/svg" width="' + w + '" height="' + h + '" viewBox="0 0 ' + w + ' ' + h + '">');
+
+      // White background
+      lines.push('  <rect width="100%" height="100%" fill="#ffffff"/>');
+
+      // Background image if present
+      if (this.bgImageSrc) {
+        lines.push('  <image href="' + this.bgImageSrc + '" x="0" y="0" width="' + w + '" height="' + h + '" opacity="0.15" preserveAspectRatio="xMidYMid meet"/>');
+      }
+
+      // Text operations
+      for (var i = 0; i < this.operations.length; i++) {
+        var op = this.operations[i];
+        var deg = (op.angle * 180 / Math.PI).toFixed(2);
+        var x = op.x.toFixed(2);
+        var y = op.y.toFixed(2);
+        var fs = op.fontSize.toFixed(2);
+        var escapedChar = op.char
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;');
+        lines.push('  <text x="0" y="0" font-family="' + op.fontFamily + '" font-weight="' + op.fontWeight + '" font-size="' + fs + '" fill="' + op.color + '" transform="translate(' + x + ',' + y + ') rotate(' + deg + ')">' + escapedChar + '</text>');
+      }
+
+      lines.push('</svg>');
+
+      var svgStr = lines.join('\n');
+      var blob = new Blob([svgStr], { type: 'image/svg+xml' });
+      var link = document.createElement('a');
+      link.download = 'caligrama_' + Date.now() + '.svg';
+      link.href = URL.createObjectURL(blob);
+      link.click();
+      URL.revokeObjectURL(link.href);
+    }
+
+    /* ---------- Import Background ---------- */
+
+    importImage() {
+      document.getElementById('fileInput').click();
+    }
+
+    loadImage(file) {
+      if (!file) return;
+      var self = this;
+      var reader = new FileReader();
+      reader.onload = function(e) {
+        var img = new Image();
+        img.onload = function() {
+          self.bgImage = img;
+          self.bgImageSrc = e.target.result;
+          self.drawBgImage();
+          self.saveState();
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    drawBgImage() {
+      if (!this.bgImage) return;
+      this.ctx.save();
+      this.ctx.globalAlpha = 0.15;
+
+      var scale = Math.min(
+        this.canvas.width / this.bgImage.width,
+        this.canvas.height / this.bgImage.height
+      );
+      var w = this.bgImage.width * scale;
+      var h = this.bgImage.height * scale;
+      var x = (this.canvas.width - w) / 2;
+      var y = (this.canvas.height - h) / 2;
+
+      this.ctx.drawImage(this.bgImage, x, y, w, h);
+      this.ctx.globalAlpha = 1.0;
+      this.ctx.restore();
+    }
+
+    /* ---------- Clear ---------- */
+
+    clearCanvas() {
+      this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+      this.operations = [];
+      this.bgImage = null;
+      this.bgImageSrc = null;
+      this.saveState();
+      this.hideAllPanels();
+    }
+
+    /* ---------- Panel Management ---------- */
+
+    togglePanel(panelId, tabEl) {
+      var panel = document.getElementById(panelId);
+      if (!panel) return;
+      var wasVisible = panel.classList.contains('show');
+
+      this.hideAllPanels();
+
+      if (!wasVisible) {
+        panel.classList.add('show');
+        if (tabEl) tabEl.classList.add('active');
+      }
+    }
+
+    hideAllPanels() {
+      document.querySelectorAll('.panel').forEach(function(p) { p.classList.remove('show'); });
+      document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
+    }
+
+    flashCommand(idx) {
+      var el = document.querySelector('.command[data-idx="' + idx + '"]');
+      if (el) {
+        el.classList.add('active');
+        setTimeout(function() { el.classList.remove('active'); }, 300);
+      }
+    }
+
+    /* ---------- Theme Toggle ---------- */
+
+    toggleTheme() {
+      this.isDarkTheme = !this.isDarkTheme;
+      document.documentElement.setAttribute('data-theme', this.isDarkTheme ? 'dark' : '');
+      document.getElementById('themeToggle').textContent = this.isDarkTheme ? 'OSCURO' : 'CLARO';
+    }
+
+    /* ---------- Mode Toggle ---------- */
+
+    toggleMode() {
+      this.isAccessibleMode = !this.isAccessibleMode;
+      this.updateModeUI();
+      this.updateTextArray();
+    }
+
+    updateModeUI() {
+      var btn = document.getElementById('modeToggle');
+      btn.textContent = this.isAccessibleMode ? 'ACCESIBLE' : 'AVANZADO';
+
+      var thicknessTab = document.getElementById('thicknessTab');
+      var clearTab = document.getElementById('clearTab');
+
+      if (this.isAccessibleMode) {
+        thicknessTab.classList.add('hidden-tab');
+        clearTab.classList.add('hidden-tab');
+      } else {
+        thicknessTab.classList.remove('hidden-tab');
+        clearTab.classList.remove('hidden-tab');
+      }
+
+      // Update split mode label
+      var label = document.getElementById('splitMode');
+      if (label) label.textContent = this.isAccessibleMode ? 'palabras' : 'caracteres';
+    }
+
+    /* ---------- Event Binding ---------- */
+
+    bindEvents() {
+      var self = this;
+
+      // Window resize
+      window.addEventListener('resize', function() { self.resizeCanvas(); });
+
+      // Mouse events on canvas
+      this.canvas.addEventListener('mousedown', function(e) { self.onPointerDown(e); });
+      this.canvas.addEventListener('mousemove', function(e) { self.onPointerMove(e); });
+      this.canvas.addEventListener('mouseup', function() { self.onPointerUp(); });
+      this.canvas.addEventListener('mouseleave', function() { self.onPointerUp(); });
+
+      // Touch events on canvas
+      this.canvas.addEventListener('touchstart', function(e) { self.onTouchStart(e); }, { passive: false });
+      this.canvas.addEventListener('touchmove', function(e) { self.onTouchMove(e); }, { passive: false });
+      this.canvas.addEventListener('touchend', function(e) { self.onTouchEnd(e); }, { passive: false });
+      this.canvas.addEventListener('touchcancel', function(e) { self.onTouchEnd(e); }, { passive: false });
+
+      // Sidebar tabs
+      document.querySelectorAll('.tab').forEach(function(tab) {
+        tab.addEventListener('click', function(e) {
+          var panelId = e.currentTarget.dataset.panel + 'Panel';
+          self.togglePanel(panelId, e.currentTarget);
+        });
+      });
+
+      // Close panels on outside click
+      document.addEventListener('click', function(e) {
+        if (!e.target.closest('.sidebar') && !e.target.closest('.panel')) {
+          self.hideAllPanels();
+        }
+      });
+
+      // Font options
+      document.querySelectorAll('.font-option').forEach(function(opt) {
+        opt.addEventListener('click', function(e) {
+          document.querySelectorAll('.font-option').forEach(function(o) { o.classList.remove('selected'); });
+          e.target.classList.add('selected');
+          self.fontFamily = e.target.dataset.font;
+        });
+      });
+
+      // Weight toggle
+      document.querySelectorAll('.weight-btn').forEach(function(btn) {
+        btn.addEventListener('click', function(e) {
+          document.querySelectorAll('.weight-btn').forEach(function(b) { b.classList.remove('active'); });
+          e.target.classList.add('active');
+          self.fontWeight = e.target.dataset.weight;
+        });
+      });
+
+      // Color options
+      document.querySelectorAll('.color-option').forEach(function(opt) {
+        opt.addEventListener('click', function(e) {
+          document.querySelectorAll('.color-option').forEach(function(o) { o.classList.remove('selected'); });
+          e.target.classList.add('selected');
+          self.color = e.target.dataset.color;
+          document.getElementById('hexInput').value = '';
+          document.getElementById('rgbInput').value = '';
+        });
+      });
+
+      // HEX input
+      document.getElementById('hexInput').addEventListener('change', function(e) {
+        var val = e.target.value.trim();
+        if (/^#[0-9A-Fa-f]{6}$/.test(val)) {
+          self.color = val;
+          document.querySelectorAll('.color-option').forEach(function(o) { o.classList.remove('selected'); });
+        }
+      });
+
+      // RGB input
+      document.getElementById('rgbInput').addEventListener('change', function(e) {
+        var parts = e.target.value.match(/\d+/g);
+        if (parts && parts.length === 3) {
+          var r = parseInt(parts[0], 10);
+          var g = parseInt(parts[1], 10);
+          var b = parseInt(parts[2], 10);
+          if (r >= 0 && r <= 255 && g >= 0 && g <= 255 && b >= 0 && b <= 255) {
+            self.color = 'rgb(' + r + ',' + g + ',' + b + ')';
+            document.querySelectorAll('.color-option').forEach(function(o) { o.classList.remove('selected'); });
+          }
+        }
+      });
+
+      // Eyedropper
+      document.getElementById('eyedropperBtn').addEventListener('click', function() {
+        self.isEyedropperActive = true;
+        self.canvas.style.cursor = 'cell';
+      });
+
+      // Thickness slider
+      document.getElementById('thicknessSlider').addEventListener('input', function(e) {
+        self.thicknessMultiplier = parseFloat(e.target.value);
+        document.getElementById('thicknessVal').textContent = self.thicknessMultiplier.toFixed(1) + 'x';
+      });
+
+      // Distance scale slider
+      document.getElementById('distScaleSlider').addEventListener('input', function(e) {
+        self.distScale = parseFloat(e.target.value);
+        document.getElementById('distScaleVal').textContent = self.distScale.toFixed(1);
+      });
+
+      // Density slider
+      document.getElementById('densitySlider').addEventListener('input', function(e) {
+        self.spacingDensity = parseFloat(e.target.value);
+        document.getElementById('densityVal').textContent = self.spacingDensity.toFixed(1);
+      });
+
+      // Leading slider
+      document.getElementById('leadingSlider').addEventListener('input', function(e) {
+        self.leadingFactor = parseFloat(e.target.value);
+        document.getElementById('leadingVal').textContent = self.leadingFactor.toFixed(1);
+      });
+
+      // Text input
+      document.getElementById('textInput').addEventListener('input', function(e) {
+        self.text = e.target.value || 'a';
+        self.updateTextArray();
+      });
+
+      // Clear button
+      document.getElementById('clearBtn').addEventListener('click', function() {
+        self.clearCanvas();
+      });
+
+      // File input
+      document.getElementById('fileInput').addEventListener('change', function(e) {
+        var file = e.target.files && e.target.files[0];
+        if (file) self.loadImage(file);
+        e.target.value = ''; // reset for re-import
+      });
+
+      // Theme toggle
+      document.getElementById('themeToggle').addEventListener('click', function() {
+        self.toggleTheme();
+      });
+
+      // Mode toggle
+      document.getElementById('modeToggle').addEventListener('click', function() {
+        self.toggleMode();
+      });
+
+      // Keyboard shortcuts
+      document.addEventListener('keydown', function(e) {
+        if (e.ctrlKey || e.metaKey) {
+          var key = e.key.toLowerCase();
+          if (key === 'g') {
+            e.preventDefault();
+            self.exportPNG();
+            self.flashCommand(0);
+          } else if (key === 's') {
+            e.preventDefault();
+            self.exportSVG();
+            self.flashCommand(1);
+          } else if (key === 'i') {
+            e.preventDefault();
+            self.importImage();
+            self.flashCommand(2);
+          } else if (key === 'z') {
+            e.preventDefault();
+            self.undo();
+            self.flashCommand(3);
+          } else if (key === 'y') {
+            e.preventDefault();
+            self.redo();
+            self.flashCommand(4);
+          }
+        }
+      });
+    }
+  }
+
+  // Initialize on DOM ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function() { new Caligramas(); });
+  } else {
+    new Caligramas();
+  }
+
+})();
+</script>
+</body>
+</html>
